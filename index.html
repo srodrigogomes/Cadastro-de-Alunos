@@ -56,6 +56,7 @@
                     <div>
                         <label for="matricula" class="block text-sm font-medium text-gray-700">Matrícula (Opcional)</label>
                         <input type="text" id="matricula" name="matricula" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p id="error-matricula" class="text-xs text-red-600 mt-1 hidden"></p>
                     </div>
 
                     <!-- Notas -->
@@ -101,6 +102,15 @@
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Situação:</span>
                             <span id="resultado-situacao" class="text-2xl font-bold text-gray-900">--</span>
+                        </div>
+                        <!-- NOVAS LINHAS ADICIONADAS -->
+                        <div class="flex justify-between items-center border-t pt-2 mt-2">
+                            <span class="text-gray-600">Maior Nota:</span>
+                            <span id="resultado-maior" class="text-xl font-bold text-gray-900">--</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Menor Nota:</span>
+                            <span id="resultado-menor" class="text-xl font-bold text-gray-900">--</span>
                         </div>
                     </div>
                     <p class="mt-4 text-sm text-center text-gray-500 border-t pt-4">Média mínima para aprovação: <strong class="text-gray-700">65 pontos</strong></p>
@@ -231,6 +241,9 @@
             
             const resultadoMediaEl = document.getElementById('resultado-media');
             const resultadoSituacaoEl = document.getElementById('resultado-situacao');
+            // NOVAS LINHAS ADICIONADAS
+            const resultadoMaiorEl = document.getElementById('resultado-maior');
+            const resultadoMenorEl = document.getElementById('resultado-menor');
             
             const buscaInput = document.getElementById('busca');
             const tabelaBody = document.getElementById('tabela-alunos');
@@ -266,16 +279,24 @@
                     .filter(n => !isNaN(n) && n >= 0 && n <= 100);
 
                 if (notasValidas.length === 0) {
-                    return { media: '0.0', situacao: 'Reprovado' };
+                    // MODIFICADO: Retorna mais dados
+                    return { media: '0.0', situacao: 'Reprovado', maior: '--', menor: '--' };
                 }
 
                 const soma = notasValidas.reduce((acc, nota) => acc + nota, 0);
                 const media = soma / notasValidas.length;
                 const situacao = media >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+                
+                // NOVAS LINHAS ADICIONADAS
+                const maior = Math.max(...notasValidas);
+                const menor = Math.min(...notasValidas);
 
+                // MODIFICADO: Retorna mais dados
                 return {
                     media: media.toFixed(1),
                     situacao: situacao,
+                    maior: maior.toFixed(1),
+                    menor: menor.toFixed(1)
                 };
             }
 
@@ -284,10 +305,14 @@
              */
             function atualizarResultadoImediato() {
                 const notas = Array.from(notaInputs).map(input => input.value);
-                const { media, situacao } = calcularMedia(notas);
+                // MODIFICADO: Captura mais dados
+                const { media, situacao, maior, menor } = calcularMedia(notas);
 
                 resultadoMediaEl.textContent = media;
                 resultadoSituacaoEl.textContent = situacao;
+                // NOVAS LINHAS ADICIONADAS
+                resultadoMaiorEl.textContent = maior;
+                resultadoMenorEl.textContent = menor;
 
                 if (situacao === 'Aprovado') {
                     resultadoSituacaoEl.className = 'text-2xl font-bold text-green-600';
@@ -300,8 +325,12 @@
             
             function clearErrors() {
                 document.getElementById('error-nome').classList.add('hidden');
+                // NOVA LINHA ADICIONADA
+                document.getElementById('error-matricula').classList.add('hidden');
                 document.getElementById('error-notas').classList.add('hidden');
                 nomeInput.classList.remove('input-error');
+                // NOVA LINHA ADICIONADA
+                matriculaInput.classList.remove('input-error');
                 notaInputs.forEach(n => n.classList.remove('input-error'));
             }
 
@@ -315,6 +344,23 @@
                     document.getElementById('error-nome').classList.remove('hidden');
                     nomeInput.classList.add('input-error');
                     isValid = false;
+                }
+
+                // NOVA VALIDAÇÃO ADICIONADA (Matrícula)
+                const matricula = matriculaInput.value.trim();
+                // Opcional, mas se for preenchida, deve ser única
+                if (matricula !== '') { 
+                    const matriculaDuplicada = state.alunos.find(aluno => 
+                        aluno.matricula === matricula && // Matricula é a mesma
+                        aluno.id !== state.editId          // E não é o aluno que estamos editando
+                    );
+                    
+                    if (matriculaDuplicada) {
+                        document.getElementById('error-matricula').textContent = 'Esta matrícula já está em uso por outro aluno.';
+                        document.getElementById('error-matricula').classList.remove('hidden');
+                        matriculaInput.classList.add('input-error');
+                        isValid = false;
+                    }
                 }
 
                 // Valida Notas
@@ -495,7 +541,8 @@
                 }
 
                 const notas = Array.from(notaInputs).map(input => input.value === '' ? null : parseFloat(input.value));
-                const { media, situacao } = calcularMedia(notas);
+                // MODIFICADO: Captura mais dados
+                const { media, situacao, maior, menor } = calcularMedia(notas);
 
                 const alunoData = {
                     id: state.editId ? state.editId : Date.now(),
@@ -504,6 +551,9 @@
                     notas: notas, // Armazena as 4 notas
                     media: media,
                     situacao: situacao,
+                    // NOVAS LINHAS ADICIONADAS
+                    maiorNota: maior,
+                    menorNota: menor
                 };
 
                 if (state.editId) {
