@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro e Avaliação de Alunos</title>
+    <!-- Carrega o Tailwind CSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo para a fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Classe para ocultar elementos */
+        .hidden {
+            display: none;
+        }
+        /* Estilos para os campos de formulário com erro */
+        .input-error {
+            border-color: #ef4444; /* red-500 */
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 antialiased">
+
+    <!-- Container Principal -->
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+
+        <!-- Título -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Cadastro e Avaliação de Alunos</h1>
+            <p class="text-lg text-gray-600">Gerencie notas, calcule médias e acompanhe o desempenho da turma.</p>
+        </header>
+
+        <!-- Layout principal (Formulário à esquerda, Lista à direita) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Coluna 1: Formulário de Cadastro e Edição -->
+            <aside class="lg:col-span-1 space-y-6">
+                <form id="form-aluno" class="bg-white p-6 rounded-lg shadow-md space-y-4">
+                    <h2 id="form-title" class="text-xl font-semibold mb-4">Novo Aluno</h2>
+                    
+                    <!-- Campo oculto para ID de edição -->
+                    <input type="hidden" id="aluno-id">
+
+                    <!-- Nome Completo -->
+                    <div>
+                        <label for="nome" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+                        <input type="text" id="nome" name="nome" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        <p id="error-nome" class="text-xs text-red-600 mt-1 hidden"></p>
+                    </div>
+
+                    <!-- Matrícula -->
+                    <div>
+                        <label for="matricula" class="block text-sm font-medium text-gray-700">Matrícula (Opcional)</label>
+                        <input type="text" id="matricula" name="matricula" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="nota1" class="block text-sm font-medium text-gray-700">Nota 1</label>
+                            <input type="number" id="nota1" name="nota" min="0" max="100" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 nota-input">
+                        </div>
+                        <div>
+                            <label for="nota2" class="block text-sm font-medium text-gray-700">Nota 2</label>
+                            <input type="number" id="nota2" name="nota" min="0" max="100" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 nota-input">
+                        </div>
+                        <div>
+                            <label for="nota3" class="block text-sm font-medium text-gray-700">Nota 3</label>
+                            <input type="number" id="nota3" name="nota" min="0" max="100" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 nota-input">
+                        </div>
+                        <div>
+                            <label for="nota4" class="block text-sm font-medium text-gray-700">Nota 4</label>
+                            <input type="number" id="nota4" name="nota" min="0" max="100" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 nota-input">
+                        </div>
+                    </div>
+                    <p id="error-notas" class="text-xs text-red-600 mt-1 hidden"></p>
+
+                    <!-- Botões do Formulário -->
+                    <div class="flex gap-4 pt-2">
+                        <button type="submit" id="btn-salvar" class="flex-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Salvar Aluno
+                        </button>
+                        <button type="button" id="btn-limpar-form" class="flex-1 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Limpar
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Área de Resultado Imediato -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold text-gray-800">Resultado do Cálculo</h3>
+                    <div class="mt-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Média:</span>
+                            <span id="resultado-media" class="text-2xl font-bold text-gray-900">--</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Situação:</span>
+                            <span id="resultado-situacao" class="text-2xl font-bold text-gray-900">--</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-center text-gray-500 border-t pt-4">Média mínima para aprovação: <strong class="text-gray-700">65 pontos</strong></p>
+                </div>
+            </aside>
+
+            <!-- Coluna 2: Lista, Relatório e Ações -->
+            <main class="lg:col-span-2 space-y-6">
+
+                <!-- Relatório da Turma -->
+                <section class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Relatório da Turma</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-sm text-gray-500">Total de Alunos</div>
+                            <div id="report-total" class="text-3xl font-bold text-blue-600">0</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Aprovados</div>
+                            <div id="report-aprovados" class="text-3xl font-bold text-green-600">0</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Reprovados</div>
+                            <div id="report-reprovados" class="text-3xl font-bold text-red-600">0</div>
+                        </div>
+                        <div class="sm:col-span-3 mt-2">
+                            <div class="text-sm text-gray-500">Média Geral da Turma</div>
+                            <div id="report-media-turma" class="text-3xl font-bold text-gray-800">0.0</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Ações e Busca -->
+                <section class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <!-- Busca -->
+                        <div class="flex-grow">
+                            <label for="busca" class="sr-only">Buscar por nome</label>
+                            <input type="search" id="busca" placeholder="Buscar por nome..." class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <!-- Botões de Exportação -->
+                        <div class="flex gap-2">
+                            <button id="btn-export-csv" class="py-2 px-3 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">Exportar CSV</button>
+                            <button id="btn-export-json" class="py-2 px-3 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Exportar JSON</button>
+                            <button id="btn-limpar-tudo" class="py-2 px-3 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Limpar Tudo</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Lista de Alunos -->
+                <section class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h2 class="text-xl font-semibold p-6">Lista de Alunos</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matrícula</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">N1</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">N2</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">N3</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">N4</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Média</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Situação</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-alunos" class="bg-white divide-y divide-gray-200">
+                                <!-- Linhas de alunos serão inseridas aqui via JS -->
+                                <tr id="linha-placeholder">
+                                    <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                                        Nenhum aluno cadastrado ainda.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação (oculto por padrão) -->
+    <div id="modal-confirmacao" class="hidden fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 text-center">
+            <!-- Overlay -->
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="inline-block bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full p-6" role="dialog" aria-modal="true">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Confirmar Ação</h3>
+                <div class="mt-2">
+                    <p class="text-sm text-gray-500" id="modal-message">Você tem certeza?</p>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
+                    <button id="modal-btn-confirma" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm">
+                        Confirmar
+                    </button>
+                    <button id="modal-btn-cancela" type="button" class="mt-3 sm:mt-0 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Constantes e Estado ---
+            const MEDIA_APROVACAO = 65;
+            const STORAGE_KEY = 'cadastroAlunosApp_data_v1';
+
+            let state = {
+                alunos: [],
+                editId: null,
+            };
+
+            // --- Elementos do DOM ---
+            const form = document.getElementById('form-aluno');
+            const formTitle = document.getElementById('form-title');
+            const alunoIdInput = document.getElementById('aluno-id');
+            const nomeInput = document.getElementById('nome');
+            const matriculaInput = document.getElementById('matricula');
+            const notaInputs = document.querySelectorAll('.nota-input'); // [nota1, nota2, nota3, nota4]
+            const btnSalvar = document.getElementById('btn-salvar');
+            const btnLimparForm = document.getElementById('btn-limpar-form');
+            
+            const resultadoMediaEl = document.getElementById('resultado-media');
+            const resultadoSituacaoEl = document.getElementById('resultado-situacao');
+            
+            const buscaInput = document.getElementById('busca');
+            const tabelaBody = document.getElementById('tabela-alunos');
+            const placeholderRow = document.getElementById('linha-placeholder');
+
+            const reportTotalEl = document.getElementById('report-total');
+            const reportAprovadosEl = document.getElementById('report-aprovados');
+            const reportReprovadosEl = document.getElementById('report-reprovados');
+            const reportMediaTurmaEl = document.getElementById('report-media-turma');
+
+            const btnExportCSV = document.getElementById('btn-export-csv');
+            const btnExportJSON = document.getElementById('btn-export-json');
+            const btnLimparTudo = document.getElementById('btn-limpar-tudo');
+
+            const modal = document.getElementById('modal-confirmacao');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalBtnConfirma = document.getElementById('modal-btn-confirma');
+            const modalBtnCancela = document.getElementById('modal-btn-cancela');
+            let modalConfirmCallback = null;
+
+            // --- Funções de Lógica e Cálculo ---
+
+            /**
+             * Calcula a média e a situação com base nas notas fornecidas.
+             * @param {number[]} notas - Array de notas (pode conter null ou undefined).
+             * @returns {object} - { media: string, situacao: string }
+             */
+            function calcularMedia(notas) {
+                // Filtra apenas as notas válidas (números entre 0 e 100)
+                const notasValidas = notas
+                    .map(n => parseFloat(n))
+                    .filter(n => !isNaN(n) && n >= 0 && n <= 100);
+
+                if (notasValidas.length === 0) {
+                    return { media: '0.0', situacao: 'Reprovado' };
+                }
+
+                const soma = notasValidas.reduce((acc, nota) => acc + nota, 0);
+                const media = soma / notasValidas.length;
+                const situacao = media >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+
+                return {
+                    media: media.toFixed(1),
+                    situacao: situacao,
+                };
+            }
+
+            /**
+             * Atualiza a exibição de resultado imediato no formulário.
+             */
+            function atualizarResultadoImediato() {
+                const notas = Array.from(notaInputs).map(input => input.value);
+                const { media, situacao } = calcularMedia(notas);
+
+                resultadoMediaEl.textContent = media;
+                resultadoSituacaoEl.textContent = situacao;
+
+                if (situacao === 'Aprovado') {
+                    resultadoSituacaoEl.className = 'text-2xl font-bold text-green-600';
+                } else {
+                    resultadoSituacaoEl.className = 'text-2xl font-bold text-red-600';
+                }
+            }
+
+            // --- Funções de Validação de Formulário ---
+            
+            function clearErrors() {
+                document.getElementById('error-nome').classList.add('hidden');
+                document.getElementById('error-notas').classList.add('hidden');
+                nomeInput.classList.remove('input-error');
+                notaInputs.forEach(n => n.classList.remove('input-error'));
+            }
+
+            function validarFormulario() {
+                clearErrors();
+                let isValid = true;
+                
+                // Valida Nome
+                if (nomeInput.value.trim() === '') {
+                    document.getElementById('error-nome').textContent = 'O nome é obrigatório.';
+                    document.getElementById('error-nome').classList.remove('hidden');
+                    nomeInput.classList.add('input-error');
+                    isValid = false;
+                }
+
+                // Valida Notas
+                let notaInvalida = false;
+                const notas = [];
+                notaInputs.forEach(input => {
+                    const valor = input.value;
+                    if (valor === '') {
+                        notas.push(null); // Nota vazia é permitida
+                        return;
+                    }
+                    const num = parseFloat(valor);
+                    if (isNaN(num) || num < 0 || num > 100) {
+                        notaInvalida = true;
+                        input.classList.add('input-error');
+                    }
+                    notas.push(num);
+                });
+
+                if (notaInvalida) {
+                    document.getElementById('error-notas').textContent = 'As notas digitadas devem ser números válidos entre 0 e 100.';
+                    document.getElementById('error-notas').classList.remove('hidden');
+                    isValid = false;
+                }
+                
+                // Verifica se pelo menos uma nota foi digitada
+                if (notas.filter(n => n !== null).length === 0) {
+                     document.getElementById('error-notas').textContent = 'Digite pelo menos uma nota.';
+                    document.getElementById('error-notas').classList.remove('hidden');
+                     notaInputs[0].classList.add('input-error');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // --- Funções de Renderização e DOM ---
+
+            /**
+             * Reseta o formulário para o estado inicial.
+             */
+            function resetForm() {
+                form.reset();
+                alunoIdInput.value = '';
+                state.editId = null;
+                formTitle.textContent = 'Novo Aluno';
+                btnSalvar.textContent = 'Salvar Aluno';
+                clearErrors();
+                atualizarResultadoImediato();
+            }
+
+            /**
+             * Renderiza a tabela de alunos com base no estado atual.
+             */
+            function renderTabela() {
+                tabelaBody.innerHTML = ''; // Limpa a tabela
+                const termoBusca = buscaInput.value.toLowerCase();
+
+                const alunosFiltrados = state.alunos.filter(aluno => 
+                    aluno.nome.toLowerCase().includes(termoBusca)
+                );
+
+                if (alunosFiltrados.length === 0) {
+                    tabelaBody.appendChild(placeholderRow);
+                    placeholderRow.classList.remove('hidden');
+                    return;
+                }
+
+                placeholderRow.classList.add('hidden');
+
+                alunosFiltrados.forEach(aluno => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    tr.dataset.id = aluno.id;
+
+                    const situacaoClasse = aluno.situacao === 'Aprovado' ? 'text-green-600' : 'text-red-600';
+                    const notasFormatadas = aluno.notas.map(n => n === null || n === '' ? '--' : parseFloat(n).toFixed(1));
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${aluno.nome}</div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${aluno.matricula || '--'}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 text-center">${notasFormatadas[0]}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 text-center">${notasFormatadas[1]}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 text-center">${notasFormatadas[2]}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 text-center">${notasFormatadas[3]}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">${aluno.media}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${situacaoClasse === 'text-green-600' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${aluno.situacao}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                            <button class="text-blue-600 hover:text-blue-900" data-action="edit">Editar</button>
+                            <button class="text-red-600 hover:text-red-900" data-action="delete">Excluir</button>
+                        </td>
+                    `;
+                    tabelaBody.appendChild(tr);
+                });
+            }
+
+            /**
+             * Atualiza o card de Relatório da Turma.
+             */
+            function renderRelatorio() {
+                const total = state.alunos.length;
+                const aprovados = state.alunos.filter(a => a.situacao === 'Aprovado').length;
+                const reprovados = total - aprovados;
+                
+                let mediaTurma = 0.0;
+                if (total > 0) {
+                    const somaMedias = state.alunos.reduce((acc, a) => acc + parseFloat(a.media), 0);
+                    mediaTurma = (somaMedias / total).toFixed(1);
+                }
+
+                reportTotalEl.textContent = total;
+                reportAprovadosEl.textContent = aprovados;
+                reportReprovadosEl.textContent = reprovados;
+                reportMediaTurmaEl.textContent = mediaTurma;
+            }
+
+            /**
+             * Atualiza todas as partes da UI.
+             */
+            function fullRender() {
+                renderTabela();
+                renderRelatorio();
+            }
+
+            // --- Funções de Persistência ---
+
+            function saveData() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.alunos));
+                } catch (error) {
+                    console.error("Erro ao salvar dados no localStorage:", error);
+                    // Em um app real, mostraria um erro para o usuário
+                }
+            }
+
+            function loadData() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    if (data) {
+                        state.alunos = JSON.parse(data);
+                        fullRender();
+                    }
+                } catch (error) {
+                    console.error("Erro ao carregar dados do localStorage:", error);
+                    state.alunos = []; // Reseta em caso de dados corrompidos
+                }
+            }
+            
+            // --- Funções de Modal ---
+            
+            function showModal(title, message, onConfirm) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modalConfirmCallback = onConfirm;
+                modal.classList.remove('hidden');
+            }
+            
+            function hideModal() {
+                modal.classList.add('hidden');
+                modalConfirmCallback = null;
+            }
+
+            // --- Manipuladores de Eventos ---
+
+            /**
+             * Manipulador de submit do formulário (Salvar / Editar).
+             */
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                if (!validarFormulario()) {
+                    return;
+                }
+
+                const notas = Array.from(notaInputs).map(input => input.value === '' ? null : parseFloat(input.value));
+                const { media, situacao } = calcularMedia(notas);
+
+                const alunoData = {
+                    id: state.editId ? state.editId : Date.now(),
+                    nome: nomeInput.value.trim(),
+                    matricula: matriculaInput.value.trim(),
+                    notas: notas, // Armazena as 4 notas
+                    media: media,
+                    situacao: situacao,
+                };
+
+                if (state.editId) {
+                    // Editando
+                    const index = state.alunos.findIndex(a => a.id === state.editId);
+                    if (index !== -1) {
+                        state.alunos[index] = alunoData;
+                    }
+                } else {
+                    // Novo
+                    state.alunos.push(alunoData);
+                }
+                
+                // Ordena por nome
+                state.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                saveData();
+                fullRender();
+                resetForm();
+            }
+
+            /**
+             * Prepara o formulário para edição.
+             */
+            function handleEdit(id) {
+                const aluno = state.alunos.find(a => a.id === id);
+                if (!aluno) return;
+
+                state.editId = id;
+                alunoIdInput.value = id;
+                nomeInput.value = aluno.nome;
+                matriculaInput.value = aluno.matricula;
+                notaInputs.forEach((input, index) => {
+                    input.value = aluno.notas[index] !== null ? aluno.notas[index] : '';
+                });
+
+                formTitle.textContent = 'Editar Aluno';
+                btnSalvar.textContent = 'Atualizar Aluno';
+                
+                atualizarResultadoImediato();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                nomeInput.focus();
+            }
+
+            /**
+             * Manipulador de clique na tabela (Editar / Excluir).
+             */
+            function handleTableClick(e) {
+                const action = e.target.dataset.action;
+                if (!action) return;
+
+                const tr = e.target.closest('tr');
+                const id = Number(tr.dataset.id);
+
+                if (action === 'edit') {
+                    handleEdit(id);
+                } else if (action === 'delete') {
+                    const aluno = state.alunos.find(a => a.id === id);
+                    showModal(
+                        'Excluir Aluno',
+                        `Tem certeza que deseja excluir "${aluno.nome}"? Esta ação não pode ser desfeita.`,
+                        () => {
+                            state.alunos = state.alunos.filter(a => a.id !== id);
+                            saveData();
+                            fullRender();
+                            hideModal();
+                        }
+                    );
+                }
+            }
+            
+            /**
+             * Funções de Exportação
+             */
+            function downloadFile(content, fileName, mimeType) {
+                const a = document.createElement('a');
+                // Adiciona BOM para CSV abrir corretamente no Excel
+                const blobContent = mimeType.includes('csv') ? '\uFEFF' + content : content;
+                const blob = new Blob([blobContent], { type: mimeType });
+                a.href = URL.createObjectURL(blob);
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            }
+
+            function exportCSV() {
+                if (state.alunos.length === 0) {
+                    alert("Não há dados para exportar."); // Usando alert simples para notificação
+                    return;
+                }
+                const headers = ['ID', 'Nome', 'Matricula', 'Nota 1', 'Nota 2', 'Nota 3', 'Nota 4', 'Media', 'Situacao'];
+                let csvContent = headers.join(';') + '\n';
+                
+                state.alunos.forEach(a => {
+                    const notas = a.notas.map(n => n === null ? '' : n);
+                    const row = [a.id, `"${a.nome}"`, `"${a.matricula}"`, notas[0], notas[1], notas[2], notas[3], a.media.replace('.', ','), a.situacao];
+                    csvContent += row.join(';') + '\n';
+                });
+                
+                downloadFile(csvContent, 'alunos_export.csv', 'text/csv;charset=utf-8;');
+            }
+            
+            function exportJSON() {
+                if (state.alunos.length === 0) {
+                    alert("Não há dados para exportar.");
+                    return;
+                }
+                const jsonContent = JSON.stringify(state.alunos, null, 2);
+                downloadFile(jsonContent, 'alunos_export.json', 'application/json;charset=utf-8;');
+            }
+            
+            function handleLimparTudo() {
+                showModal(
+                    'Limpar Todos os Dados',
+                    'Tem certeza que deseja apagar TODOS os alunos? Esta ação é irreversível.',
+                    () => {
+                        state.alunos = [];
+                        state.editId = null;
+                        saveData();
+                        fullRender();
+                        resetForm();
+                        hideModal();
+                    }
+                );
+            }
+
+            // --- Inicialização ---
+            form.addEventListener('submit', handleFormSubmit);
+            btnLimparForm.addEventListener('click', resetForm);
+            
+            // Event listener para cálculo automático
+            notaInputs.forEach(input => {
+                input.addEventListener('input', atualizarResultadoImediato);
+            });
+            
+            buscaInput.addEventListener('input', renderTabela);
+            tabelaBody.addEventListener('click', handleTableClick);
+            
+            btnExportCSV.addEventListener('click', exportCSV);
+            btnExportJSON.addEventListener('click', exportJSON);
+            btnLimparTudo.addEventListener('click', handleLimparTudo);
+            
+            // Eventos do Modal
+            modalBtnCancela.addEventListener('click', hideModal);
+            modalBtnConfirma.addEventListener('click', () => {
+                if (modalConfirmCallback) {
+                    modalConfirmCallback();
+                }
+            });
+            
+            // Carregar dados iniciais
+            loadData();
+        });
+    </script>
+</body>
+</html>
